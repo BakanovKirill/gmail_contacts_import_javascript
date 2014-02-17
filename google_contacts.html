@@ -1,0 +1,90 @@
+<!--
+Fires 'contacts_received' event on receiving contacts list from google
+
+Catch event like this (using jQuery):
+    $(function(){
+        $('#authorize-button').on('contacts_received', function(e, contacts){
+            contact=contacts[0] // array of contacts {name,email}
+            alert(contact.name + ' ' + contact.email) //Do here whatever you want
+        });
+    });
+-->
+
+{# Google html part #}
+<button id="authorize-button" style="visibility: hidden">Authorize</button>
+<script type="text/javascript">
+       // Enter a client ID for a web application from the Google Developer Console.
+        // The provided clientId will only work if the sample is run directly from
+        // https://google-api-javascript-client.googlecode.com/hg/samples/authSample.html
+        // In your Developer Console project, add a JavaScript origin that corresponds to the domain
+        // where you will be running the script.
+        var clientId = '32392746412-ojkbidt1uahpqtv3b1af4rqrmabda54c.apps.googleusercontent.com';
+
+        // Enter the API key from the Google Develoepr Console - to handle any unauthenticated
+        // requests in the code.
+        // The provided key works for this sample only when run from
+        // https://google-api-javascript-client.googlecode.com/hg/samples/authSample.html
+        // To use in your own application, replace this API key with your own.
+        var apiKey = 'AIzaSyCTs6m47AfZu3lDddsEiAkO_eM8wepSgGQ';
+
+        // To enter one or more authentication scopes, refer to the documentation for the API.
+        var scopes = "https://www.google.com/m8/feeds/contacts/default/full";
+
+        // Use a button to handle authentication the first time.
+        $('.js-google-contacts').click(function(e){
+            e.preventDefault();
+            checkAuth();
+        })
+
+        function handleClientLoad() {
+            gapi.client.setApiKey(apiKey);
+            //checkAuth() //Uncomment this line to enable contacts getting after page loads.
+        }
+
+        function checkAuth() {
+            gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: false}, handleAuthResult);
+        }
+
+
+        function handleAuthResult(authResult) {
+            var authorizeButton = document.getElementById('authorize-button');
+            if (authResult && !authResult.error) {
+                authorizeButton.style.visibility = 'hidden';
+                getContacts(authResult);
+            } else {
+                authorizeButton.style.visibility = '';
+                authorizeButton.onclick = handleAuthClick;
+            }
+        }
+
+        function handleAuthClick(event) {
+            gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: false}, handleAuthResult);
+            return false;
+        }
+
+        // Load the API and make an API call.  Display the results on the screen.
+        function getContacts(authResult) {
+
+            $.get("https://www.google.com/m8/feeds/contacts/default/full?alt=json&access_token=" + authResult.access_token + "&max-results=700&v=3.0",
+                    function (response) {
+                        //Handle Response
+                        var contacts = [];
+                        $.each(response.feed.entry, function (index, entry) {
+                            var contact = {};
+                            if (entry.hasOwnProperty('gd$email')) {
+                                contact.email = entry.gd$email[0].address
+                                //Due to javascript pointers if name will be added it will be already in the contacts list object.
+                                contacts.push(contact);
+                            }
+                            if (contact.email && entry.hasOwnProperty('gd$name')) {
+                                contact.name = entry.gd$name.gd$fullName.$t;
+                            }
+                        });
+                        //Triggers contacts_received on the google authorize button
+                        $('#authorize-button').trigger('contacts_received', [contacts,])
+                    }
+            );
+        }
+</script>
+<script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+{# Google end #}
