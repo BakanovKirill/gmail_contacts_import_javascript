@@ -7,6 +7,9 @@ Usage
 -----
 
 1. Insert the contents of the ``google_contacts.html`` to your html file before the ``</body>`` tag or where you want...
+
+> **IMPORTANT**: Replace **clientId** and **apiKey** with your data.
+
 2. You have two options:
 
     2.1 For user communicated contacts getting provide a link or button with ``js-google-contacts`` class. Clicking on it will start gmail contacts getting:
